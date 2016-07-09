@@ -13,16 +13,19 @@ class ToggleUnitTester(c: Toggle, b: Option[Backend] = None) extends PeekPokeTes
   val r = Random
 
   for(n <- 1 to 100) {
-    val i0 = r.nextInt
-    val i1 = if (i0 < 0) -i0 else i0
-    val i  = i1 % 2
+    val i: BigInt = BigInt(r.nextInt % 2).abs
+
     println(s"i=$i")
-    val o = x
+
     poke(c.io.i, i)
+    expect(c.io.o, x)
+
     step(1)
-    expect(c.io.o, o)
-    if (i % 2 == 1) 
+    if (i % 2 == 1) {
       x = (1 - x)
+    }
+
+    expect(c.io.o, x)
   }
 }
 
