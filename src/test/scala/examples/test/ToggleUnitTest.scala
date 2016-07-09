@@ -15,8 +15,6 @@ class ToggleUnitTester(c: Toggle, b: Option[Backend] = None) extends PeekPokeTes
   for(n <- 1 to 100) {
     val i: BigInt = BigInt(r.nextInt % 2).abs
 
-    println(s"i=$i")
-
     poke(c.io.i, i)
     expect(c.io.o, x)
 
