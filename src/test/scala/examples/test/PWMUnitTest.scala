@@ -5,55 +5,38 @@ package examples.test
 import Chisel.iotesters._
 import example.PWM
 import org.scalatest.Matchers
+import scala.util.Random
 
 class PWMUnitTester(c: PWM, b: Option[Backend] = None) extends PeekPokeTester(c, _backend=b) {
-  /**
-    * compute the gcd and the number of steps it should take to do it
-    *
-    * @param a positive integer
-    * @param b positive integer
-    * @return the PWM of a and b
-    */
-  def computeGcd(a: Int, b: Int): (Int, Int) = {
-    var x = a
-    var y = b
-    var depth = 1
-    while(y > 0 ) {
-      if (x > y) {
-        x -= y
-      }
-      else {
-        y -= x
-      }
-      depth += 1
-    }
-    (x, depth)
-  }
 
   val gcd = c
 
-  for(i <- 1 to 100) {
-    for (j <- 1 to 100) {
-      val (a, b, z) = (64, 48, 16)
+  var x = 0
 
-      poke(gcd.io.a, a)
-      poke(gcd.io.b, b)
-      poke(gcd.io.e, 1)
-      step(1)
-      poke(gcd.io.e, 0)
+  val r = Random
 
-      val (expected_gcd, steps) = computeGcd(a, b)
+  for(n <- 1 to 100) {
+    val enable: BigInt = BigInt(r.nextInt % 2).abs
+    val period: BigInt = BigInt(r.nextInt % (1 << c.w)).abs
+    val duty: BigInt  = BigInt(r.nextInt % period.toInt).abs
 
-      step(steps - 1) // -1 is because we step(1) already to toggle the enable
-      expect(gcd.io.z, expected_gcd)
-      expect(gcd.io.v, 1)
-    }
+    val out = enable & (x > duty)
+
+    poke(c.io.enable, enable)
+    poke(c.io.period, period)
+    poke(c.io.duty,   duty)
+    expect(c.io.out,  out)
+
+    step(1)
+
+    x = x + 1
+    if (x > period) x = 0
   }
 }
 
 class PWMTester extends ChiselFlatSpec with Matchers {
-  "PWM" should "calculate proper greatest common denominator" in {
-    runPeekPokeTester(() => new PWM) {
+  "PWM" should "calculate pulse width modulation" in {
+    runPeekPokeTester(() => new PWM(16)) {
       (c, b) => new PWMUnitTester(c, b)
     } should be (true)
   }

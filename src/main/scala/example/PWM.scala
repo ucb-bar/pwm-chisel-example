@@ -4,19 +4,15 @@ package example
 
 import Chisel._
 
-class PWM extends Module {
+class PWM(val w: Int) extends Module {
   val io = new Bundle {
-    val a  = UInt(INPUT,  16)
-    val b  = UInt(INPUT,  16)
-    val e  = Bool(INPUT)
-    val z  = UInt(OUTPUT, 16)
-    val v  = Bool(OUTPUT)
+    val enable = Bool(INPUT)
+    val period = UInt(INPUT,  w)
+    val duty   = UInt(INPUT,  w)
+    val out    = Bool(OUTPUT)
   }
-  val x  = Reg(UInt())
-  val y  = Reg(UInt())
-  when   (x > y) { x := x - y }
-  unless (x > y) { y := y - x }
-  when (io.e) { x := io.a; y := io.b }
-  io.z := x
-  io.v := y === UInt(0)
+  val x  = Reg(init = UInt(0, w))
+  x := x + UInt(1)
+  when   (x >= io.period) { x := UInt(0) }
+  io.out := io.enable && (x > io.duty)
 }
